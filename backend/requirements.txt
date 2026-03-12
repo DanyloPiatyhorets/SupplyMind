@@ -1,0 +1,10 @@
+flask[async]
+flask-cors
+openai
+python-dotenv
+psycopg2-binary
+pypdf
+pydantic
+duckduckgo-search
+chromadb
+sentence-transformers
