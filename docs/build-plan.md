@@ -8,6 +8,39 @@ Commit with `git commit -m "checkpoint: [block name] working"` after each block.
 
 ---
 
+## Progress Notes
+
+### Block 1: Project Bootstrap — DONE
+- Python 3.12 venv (3.13 incompatible with chromadb/sentence-transformers)
+- All deps installed: flask, openai, chromadb, sentence-transformers, etc.
+- Frontend scaffolded: Vite + React + TS + Tailwind v4
+- Docker Compose running Postgres on port 5433
+
+### Block 2: Database + Seed Data — DONE
+- Schema and seed SQL created and applied via docker exec
+- 14 contracts (6 owned, 8 market), 3 companies, 2 products
+- 2 intentionally overpriced contracts for data correction demo
+
+### Block 3: Flask API Skeleton — DONE
+- All 7 routes stubbed with mock data
+- /api/contracts and /api/products return real DB data
+- SSE trace stream returns 10 mock events at 500ms intervals
+
+### Block 4: Frontend Shell — DONE
+- 4 pages: HomePage, AgentRunPage, HITLPage, ReportPage
+- 4 components: AgentTrace, FlavourCards, DataCorrections, PDFUpload
+- React Router wiring, dark Tailwind theme
+- Full mock flow works end-to-end in browser
+
+### Block 5: BytePlus ModelArk Integration — PARTIAL
+- ModelArk client configured in config.py (AsyncOpenAI-compatible)
+- Synthesis agent implemented with full system prompt from prompts.md
+- **BLOCKER:** `ark.ap-southeast.bytepluses.com` unreachable (connection timeout from both curl and Python). Likely regional/network restriction.
+- **Decision:** Mock fallback keeps demo functional. Code is ready for ModelArk — just set `USE_MOCK_LLM=false` when connectivity is resolved.
+- `USE_MOCK_LLM` flag added to env config
+
+---
+
 
 ### Block 1: Project Bootstrap (30 min)
 
