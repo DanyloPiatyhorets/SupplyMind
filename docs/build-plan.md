@@ -86,7 +86,7 @@ GET  /api/products     → returns products from DB
 
 **All routes return mock data at this stage.** Real logic is added in Block 5+.
 
-**Checkpoint:** `curl http://localhost:5000/api/products` returns JSON with products.
+**Checkpoint:** `curl http://localhost:5001/api/products` returns JSON with products.
 
 ---
 
@@ -164,7 +164,6 @@ async def run_agents(plan):
 
 ---
 
-## FRIDAY AFTERNOON — ~3 Hours
 
 ### Block 8: Web Search Agent (45 min)
 
