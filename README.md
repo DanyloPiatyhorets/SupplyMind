@@ -1,7 +1,7 @@
 # SupplyMind
 
 ## 1. Intro
-Agentic procurement intelligence for SolGrid Technologies.
+Agentic procurement intelligence
 
 SupplyMind is a focused enterprise AI demo: a user describes a procurement objective, uploads optional market documents, and a multi-agent system produces a recommendation with traceable reasoning, optimization variants, and a human approval step.
 
@@ -55,9 +55,6 @@ This is presented through a polished UI designed to function as both:
 ---
 
 ## 4. Demo Flow
-
-Frontend URL: add deployed Vercel URL here  
-Backend URL: add deployed Railway/Render URL here
 
 Recommended demo prompt:
 
@@ -399,3 +396,5 @@ Environment variables are listed in [.env.example].
 - build plan: [docs/build-plan.md]
 
 ---
+
+Built with love using Claude Code 
