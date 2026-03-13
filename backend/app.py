@@ -14,6 +14,8 @@ from flask_cors import CORS
 
 import config
 from agents.orchestrator import decompose_goal
+from agents.web_search import run_web_search
+from agents.rag_agent import run_rag
 from agents.contract_agent import run_contract_analysis
 from agents.synthesis import run_synthesis
 
@@ -87,57 +89,35 @@ async def _async_pipeline(job_id: str, goal: str, doc_ids: list[str]) -> None:
         "product_focus": plan.get("context", {}).get("product_focus", "general"),
     })
 
-    # Step 2: Run sub-agents (web_search and rag are still mock, contract is real)
-    emit_event(job_id, "SEARCHING", "web_search", "Querying live market data for current prices...")
-    emit_event(job_id, "RAG_QUERY", "document_rag", "Searching uploaded documents for relevant insights...")
-    emit_event(job_id, "ANALYZING", "contract_analysis", "Loading contracts from database...")
+    # Step 2: Run 3 sub-agents IN PARALLEL via asyncio.gather()
+    # Each agent emits its own trace events with timestamps (proves parallelism)
+    def make_emitter(jid: str):
+        def emit(event, agent, message):
+            emit_event(jid, event, agent, message)
+        return emit
 
-    # Mock web search results (real implementation in Block 8)
-    async def mock_web_search(plan: dict) -> dict:
-        await asyncio.sleep(0.3)  # Simulate latency
-        product = plan.get("context", {}).get("product_focus", "Industrial Steel")
-        return {
-            "market_summary": f"EU {product.lower()} prices remain stable. Average spot price for Industrial Steel: €847/mt, Aluminium Alloy: €2,350/mt.",
-            "market_data": [],
-            "sources": ["mock-market-data"],
-            "trend": "stable",
-        }
+    emit = make_emitter(job_id)
 
-    # Mock RAG results (real implementation in Block 9)
-    async def mock_rag(plan: dict) -> dict:
-        await asyncio.sleep(0.2)  # Simulate latency
-        return {
-            "answer": "No documents uploaded for this analysis." if not doc_ids else "Document analysis pending RAG implementation.",
-            "citations": [],
-            "confidence": 0.0,
-            "gaps": "No uploaded documents available for RAG analysis.",
-        }
-
-    # Run all three in parallel
     web_result, rag_result, contract_result = await asyncio.gather(
-        mock_web_search(plan),
-        mock_rag(plan),
-        run_contract_analysis(plan),
+        run_web_search(plan, emit),
+        run_rag(plan, doc_ids, emit),
+        run_contract_analysis(plan, emit),
         return_exceptions=True,
     )
 
     # Handle exceptions from gather
     if isinstance(web_result, Exception):
         logger.error(f"Web search failed: {web_result}")
+        emit_event(job_id, "ERROR", "web_search", f"Search failed: {web_result}")
         web_result = {"market_summary": "Web search unavailable", "sources": []}
     if isinstance(rag_result, Exception):
         logger.error(f"RAG failed: {rag_result}")
+        emit_event(job_id, "ERROR", "document_rag", f"RAG failed: {rag_result}")
         rag_result = {"answer": "RAG unavailable", "citations": []}
     if isinstance(contract_result, Exception):
         logger.error(f"Contract analysis failed: {contract_result}")
         emit_event(job_id, "ERROR", "contract_analysis", f"Analysis failed: {contract_result}")
         contract_result = {"flavours": {}, "data_corrections": []}
-
-    emit_event(job_id, "SEARCHING", "web_search", f"Market research complete. Trend: {web_result.get('trend', 'unknown')}.")
-    emit_event(job_id, "RAG_QUERY", "document_rag", f"Document analysis complete. Confidence: {rag_result.get('confidence', 0):.0%}.")
-    emit_event(job_id, "ANALYZING", "contract_analysis",
-        f"Contract analysis complete: {contract_result.get('contracts_analyzed', 0)} contracts analyzed, "
-        f"{len(contract_result.get('data_corrections', []))} corrections found.")
 
     # Step 3: Synthesis
     emit_event(job_id, "SYNTHESIZING", "synthesis", "Building executive procurement report...")
@@ -302,13 +282,64 @@ def get_report(job_id):
 
 
 # ---------------------------------------------------------------------------
-# POST /api/upload-doc — mock PDF upload (real in Block 9)
+# POST /api/upload-doc — real PDF upload with chunking + embedding
 # ---------------------------------------------------------------------------
 
 @app.route("/api/upload-doc", methods=["POST"])
 def upload_doc():
+    from pypdf import PdfReader
+    from skills.rag_skill import upsert_chunks
+    import io
+
+    file = request.files.get("file")
+    if not file:
+        return jsonify({"error": "No file provided"}), 400
+
     doc_id = str(uuid.uuid4())
-    return jsonify({"doc_id": doc_id, "chunks": 5})
+    filename = file.filename or "unknown.pdf"
+
+    try:
+        # Extract text from PDF
+        pdf_bytes = file.read()
+        reader = PdfReader(io.BytesIO(pdf_bytes))
+        full_text = ""
+        for page in reader.pages:
+            page_text = page.extract_text()
+            if page_text:
+                full_text += page_text + "\n"
+
+        if not full_text.strip():
+            return jsonify({"error": "Could not extract text from PDF"}), 400
+
+        # Chunk with sliding window (500 chars, 100 overlap)
+        chunks = _chunk_text(full_text, chunk_size=500, overlap=100)
+
+        # Store in vector DB
+        metadatas = [
+            {"doc_id": doc_id, "chunk_index": i, "filename": filename}
+            for i in range(len(chunks))
+        ]
+        stored = upsert_chunks(doc_id, chunks, metadatas)
+
+        logger.info(f"Uploaded doc {doc_id}: {filename}, {len(reader.pages)} pages, {stored} chunks")
+        return jsonify({"doc_id": doc_id, "chunks": stored, "filename": filename, "pages": len(reader.pages)})
+
+    except Exception as e:
+        logger.exception(f"PDF upload failed: {e}")
+        return jsonify({"error": f"Upload failed: {str(e)}"}), 500
+
+
+def _chunk_text(text: str, chunk_size: int = 500, overlap: int = 100) -> list[str]:
+    """Split text into overlapping chunks."""
+    chunks = []
+    start = 0
+    while start < len(text):
+        end = start + chunk_size
+        chunk = text[start:end].strip()
+        if chunk:
+            chunks.append(chunk)
+        start += chunk_size - overlap
+    return chunks
 
 
 # ---------------------------------------------------------------------------
