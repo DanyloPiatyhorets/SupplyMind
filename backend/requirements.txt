@@ -7,4 +7,5 @@ pypdf
 pydantic
 duckduckgo-search
 chromadb
-sentence-transformers
+volcengine
+aiohttp
