@@ -1,12 +1,9 @@
 # SupplyMind
 
+## 1. Intro
 Agentic procurement intelligence for SolGrid Technologies.
 
 SupplyMind is a focused enterprise AI demo: a user describes a procurement objective, uploads optional market documents, and a multi-agent system produces a recommendation with traceable reasoning, optimization variants, and a human approval step.
-
----
-
-## 1. What Judges Should Notice
 
 This project is not a generic chat wrapper. It demonstrates:
 
@@ -262,7 +259,9 @@ Current status:
 
 - integration code is implemented
 - the project includes a mock-safe fallback path
-- the build notes record a connectivity blocker to `ark.ap-southeast.bytepluses.com`
+
+
+![ModelArk usage screenshot](docs/ModelArk_usage.png)
 
 ### VikingDB
 
@@ -400,15 +399,3 @@ Environment variables are listed in [.env.example].
 - build plan: [docs/build-plan.md]
 
 ---
-
-## 17. Before Final Submission
-
-Still worth adding:
-
-- deployed frontend/backend URLs
-- 2-3 screenshots in `docs/screenshots/`
-- one screenshot of live trace output
-- one screenshot of the final report
-- optional short Loom/demo video link
-
-That will turn this README from a strong project explanation into a full judging packet.
