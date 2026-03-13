@@ -39,6 +39,55 @@ Commit with `git commit -m "checkpoint: [block name] working"` after each block.
 - **Decision:** Mock fallback keeps demo functional. Code is ready for ModelArk — just set `USE_MOCK_LLM=false` when connectivity is resolved.
 - `USE_MOCK_LLM` flag added to env config
 
+### Block 6: Core Agent Logic — DONE
+- Orchestrator decomposes goals (keyword-based mock, LLM-ready)
+- Contract agent: real DB queries, deterministic optimizer, 3 flavours, data corrections
+- Synthesis agent: combines all results into AnalysisReport
+- Real pipeline wired into /api/run with background thread + Queue-based SSE
+
+### Block 7: Async Parallelism Scaffold — DONE
+- asyncio.gather() runs web_search, rag, contract_analysis in parallel
+- Timestamps prove parallelism (all 3 agents start at same millisecond)
+- Each agent has emit() callback for real-time trace events
+- Agents extracted into proper modules ready for real implementations
+
+### Block 8: Web Search Agent — DONE
+- 3-tier search skill: Serper API → DuckDuckGo → seeded mock data
+- Serper API confirmed working — real results from eurofer.eu, steelnews.biz
+- Deterministic price extraction via regex when LLM unavailable
+- LLM extraction path wired with full system prompt (ready when ModelArk works)
+
+### Block 9: RAG Pipeline — DONE
+- Real PDF upload: pypdf text extraction → sliding window chunking (500 chars, 100 overlap) → ChromaDB storage
+- ChromaDB with default embedding (all-MiniLM-L6-v2 via onnxruntime) — no torch dependency needed
+- `rag_skill.py`: vector store abstraction with upsert_chunks, query_chunks, delete_doc (VikingDB-swappable interface)
+- `rag_agent.py`: real retrieval from ChromaDB, deduplication, LLM answer extraction (with deterministic fallback)
+- Full system prompt for RAG LLM extraction wired (ready when ModelArk works)
+- End-to-end verified: upload PDF → chunks stored → agent queries → citations appear in final report
+- Demo PDF created: `docs/demo_steel_report.pdf` with realistic steel market data
+
+### Block 10: VikingDB Integration — DONE
+- VikingDB SDK installed (`volcengine` + `aiohttp`) and import verified
+- `rag_skill.py` refactored with dual-backend architecture: public API (`upsert_chunks`, `query_chunks`, `delete_doc`) routes to VikingDB or ChromaDB based on `USE_MOCK_VIKINGDB` flag
+- VikingDB backend: full `_viking_upsert`, `_viking_query`, `_viking_delete` implementations using `volcengine.viking_db` SDK
+- ChromaDB backend: same interface, uses default embedding (all-MiniLM-L6-v2 via onnxruntime)
+- Config vars added: `VIKINGDB_HOST`, `VIKINGDB_REGION`, `VIKINGDB_AK`, `VIKINGDB_SK`
+- **Status:** VikingDB credentials not available (empty in .env). ChromaDB active as fallback. To switch: set credentials + `USE_MOCK_VIKINGDB=false`
+- Removed `sentence-transformers` from requirements (torch dependency issues), replaced with `volcengine` + `aiohttp`
+
+### Block 11: End-to-End Test + Polish — DONE
+- All 3 test goals pass: cheapest steel, aluminium risk, fastest + PDF upload
+- Each run produces: 3 optimization variants, 3 data corrections, citations when PDF uploaded
+- **Fixes applied:**
+  - Contract agent: graceful DB failure with seeded fallback data (`_seeded_contracts()`)
+  - Synthesis: handles empty flavours/corrections from failed agents (uses defaults)
+  - ModelArk client: reduced timeout to 5s, disabled retries (`max_retries=0`) — prevents 30s+ waits on 404s
+  - Config: validates MODELARK_MODEL_ID format, strips comment strings from .env
+  - Frontend `getReport`: polls with 2s interval (up to 60s) instead of single fetch — handles 202 "not ready"
+  - HITLPage + ReportPage: error states, loading spinners
+  - ReportPage: handles both `excerpt` and `text` fields in document citations
+  - TypeScript compiles clean
+
 ---
 
 

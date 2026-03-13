@@ -6,10 +6,13 @@ export default function ReportPage() {
   const { jobId } = useParams<{ jobId: string }>();
   const navigate = useNavigate();
   const [report, setReport] = useState<Record<string, unknown> | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!jobId) return;
-    getReport(jobId).then(setReport);
+    getReport(jobId)
+      .then(setReport)
+      .catch((e: Error) => setError(e.message));
   }, [jobId]);
 
   function exportMarkdown() {
@@ -24,9 +27,23 @@ export default function ReportPage() {
     URL.revokeObjectURL(url);
   }
 
+  if (error) {
+    return (
+      <div className="text-center py-20">
+        <p className="text-red-400 mb-4">Failed to load report: {error}</p>
+        <button onClick={() => navigate("/")} className="text-purple-400 hover:text-purple-300">
+          Start new analysis
+        </button>
+      </div>
+    );
+  }
+
   if (!report) {
     return (
-      <div className="text-center py-20 text-gray-400">Loading report...</div>
+      <div className="text-center py-20">
+        <div className="w-6 h-6 border-2 border-purple-400 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+        <p className="text-gray-400">Loading report...</p>
+      </div>
     );
   }
 
@@ -37,7 +54,7 @@ export default function ReportPage() {
   };
   const docInsights = report.document_insights as {
     overview: string;
-    key_quotes: { text: string; doc_id: string }[];
+    key_quotes: { text?: string; excerpt?: string; doc_id: string }[];
   };
   const risks = report.risks_and_mitigations as {
     risk: string;
@@ -98,13 +115,13 @@ export default function ReportPage() {
         <h3 className="text-lg font-semibold text-white mb-2">
           Document Insights
         </h3>
-        <p className="text-gray-300 text-sm mb-3">{docInsights.overview}</p>
-        {docInsights.key_quotes.map((q, i) => (
+        <p className="text-gray-300 text-sm mb-3">{docInsights?.overview || "No documents uploaded for this analysis."}</p>
+        {(docInsights?.key_quotes || []).map((q, i) => (
           <blockquote
             key={i}
             className="border-l-2 border-purple-500 pl-3 text-sm text-gray-400 italic mb-2"
           >
-            "{q.text}"
+            "{q.excerpt || q.text}"
             <span className="text-gray-500 text-xs ml-2">— {q.doc_id}</span>
           </blockquote>
         ))}

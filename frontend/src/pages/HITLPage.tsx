@@ -13,9 +13,13 @@ export default function HITLPage() {
   const [selected, setSelected] = useState<string | null>(null);
   const [approving, setApproving] = useState(false);
 
+  const [error, setError] = useState<string | null>(null);
+
   useEffect(() => {
     if (!jobId) return;
-    getReport(jobId).then(setReport);
+    getReport(jobId)
+      .then(setReport)
+      .catch((e: Error) => setError(e.message));
   }, [jobId]);
 
   async function handleApprove() {
@@ -30,9 +34,23 @@ export default function HITLPage() {
     }
   }
 
+  if (error) {
+    return (
+      <div className="text-center py-20">
+        <p className="text-red-400 mb-4">Failed to load report: {error}</p>
+        <button onClick={() => navigate("/")} className="text-purple-400 hover:text-purple-300">
+          Start new analysis
+        </button>
+      </div>
+    );
+  }
+
   if (!report) {
     return (
-      <div className="text-center py-20 text-gray-400">Loading report...</div>
+      <div className="text-center py-20">
+        <div className="w-6 h-6 border-2 border-purple-400 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+        <p className="text-gray-400">Loading report...</p>
+      </div>
     );
   }
 

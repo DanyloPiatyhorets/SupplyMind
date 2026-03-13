@@ -13,9 +13,16 @@ export function traceStream(jobId: string): EventSource {
   return new EventSource(`${API_URL}/api/trace/${jobId}`);
 }
 
-export async function getReport(jobId: string) {
-  const res = await fetch(`${API_URL}/api/report/${jobId}`);
-  return res.json();
+export async function getReport(jobId: string, maxRetries = 30): Promise<Record<string, unknown>> {
+  for (let i = 0; i < maxRetries; i++) {
+    const res = await fetch(`${API_URL}/api/report/${jobId}`);
+    if (res.status === 200) {
+      return res.json();
+    }
+    // 202 = not ready yet, retry after delay
+    await new Promise((r) => setTimeout(r, 2000));
+  }
+  throw new Error("Report not ready after polling");
 }
 
 export async function uploadDoc(file: File) {

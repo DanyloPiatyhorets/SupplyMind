@@ -127,17 +127,56 @@ def _build_flavours(
     }
 
 
-async def run_contract_analysis(plan: dict, market_data: dict | None = None) -> dict:
+def _seeded_contracts() -> list[dict]:
+    """Fallback contract data when DB is unavailable (matches seed.sql)."""
+    return [
+        # Owned contracts (2 intentionally overpriced)
+        {"id": 1, "company_id": 1, "product_id": 1, "company_name": "GermSteel GmbH", "product_name": "Industrial Steel", "direction": "IN", "source": "OWNED", "unit_price": 980.0, "volume": 100, "delivery_days": 14, "credibility_score": 0.92, "deadline": "2025-09-30"},
+        {"id": 2, "company_id": 1, "product_id": 2, "company_name": "GermSteel GmbH", "product_name": "Aluminium Alloy", "direction": "IN", "source": "OWNED", "unit_price": 2380.0, "volume": 50, "delivery_days": 21, "credibility_score": 0.92, "deadline": "2025-10-15"},
+        {"id": 3, "company_id": 2, "product_id": 1, "company_name": "FranceMetal SA", "product_name": "Industrial Steel", "direction": "IN", "source": "OWNED", "unit_price": 850.0, "volume": 150, "delivery_days": 18, "credibility_score": 0.88, "deadline": "2025-09-15"},
+        {"id": 4, "company_id": 2, "product_id": 2, "company_name": "FranceMetal SA", "product_name": "Aluminium Alloy", "direction": "IN", "source": "OWNED", "unit_price": 2700.0, "volume": 60, "delivery_days": 14, "credibility_score": 0.88, "deadline": "2025-08-30"},
+        {"id": 5, "company_id": 3, "product_id": 1, "company_name": "PolyChem Ltd", "product_name": "Industrial Steel", "direction": "OUT", "source": "OWNED", "unit_price": 870.0, "volume": 80, "delivery_days": 25, "credibility_score": 0.78, "deadline": "2025-11-01"},
+        {"id": 6, "company_id": 3, "product_id": 2, "company_name": "PolyChem Ltd", "product_name": "Aluminium Alloy", "direction": "OUT", "source": "OWNED", "unit_price": 2350.0, "volume": 40, "delivery_days": 28, "credibility_score": 0.78, "deadline": "2025-10-01"},
+        # Market offers
+        {"id": 7, "company_id": 1, "product_id": 1, "company_name": "GermSteel GmbH", "product_name": "Industrial Steel", "direction": "IN", "source": "MARKET", "unit_price": 865.0, "volume": 200, "delivery_days": 7, "credibility_score": 0.95, "deadline": "2025-12-31"},
+        {"id": 8, "company_id": 1, "product_id": 2, "company_name": "GermSteel GmbH", "product_name": "Aluminium Alloy", "direction": "IN", "source": "MARKET", "unit_price": 2380.0, "volume": 100, "delivery_days": 10, "credibility_score": 0.95, "deadline": "2025-12-31"},
+        {"id": 9, "company_id": 2, "product_id": 1, "company_name": "FranceMetal SA", "product_name": "Industrial Steel", "direction": "IN", "source": "MARKET", "unit_price": 845.0, "volume": 250, "delivery_days": 14, "credibility_score": 0.90, "deadline": "2025-12-31"},
+        {"id": 10, "company_id": 2, "product_id": 2, "company_name": "FranceMetal SA", "product_name": "Aluminium Alloy", "direction": "IN", "source": "MARKET", "unit_price": 2310.0, "volume": 80, "delivery_days": 18, "credibility_score": 0.90, "deadline": "2025-12-31"},
+        {"id": 11, "company_id": 3, "product_id": 1, "company_name": "PolyChem Ltd", "product_name": "Industrial Steel", "direction": "IN", "source": "MARKET", "unit_price": 830.0, "volume": 300, "delivery_days": 28, "credibility_score": 0.82, "deadline": "2025-12-31"},
+        {"id": 12, "company_id": 3, "product_id": 2, "company_name": "PolyChem Ltd", "product_name": "Aluminium Alloy", "direction": "IN", "source": "MARKET", "unit_price": 2290.0, "volume": 120, "delivery_days": 25, "credibility_score": 0.82, "deadline": "2025-12-31"},
+        {"id": 13, "company_id": 1, "product_id": 1, "company_name": "GermSteel GmbH", "product_name": "Industrial Steel", "direction": "IN", "source": "MARKET", "unit_price": 855.0, "volume": 150, "delivery_days": 10, "credibility_score": 0.93, "deadline": "2025-12-31"},
+        {"id": 14, "company_id": 2, "product_id": 2, "company_name": "FranceMetal SA", "product_name": "Aluminium Alloy", "direction": "IN", "source": "MARKET", "unit_price": 2350.0, "volume": 60, "delivery_days": 12, "credibility_score": 0.88, "deadline": "2025-12-31"},
+    ]
+
+
+async def run_contract_analysis(plan: dict, emit: callable = None, market_data: dict | None = None) -> dict:
     """Full contract analysis: load DB, detect corrections, build flavours."""
 
-    contracts = _load_contracts()
+    def _emit(event, agent, msg):
+        if emit:
+            emit(event, agent, msg)
+
+    _emit("ANALYZING", "contract_analysis", "Loading contracts from database...")
+
+    try:
+        contracts = _load_contracts()
+    except Exception as e:
+        logger.warning(f"DB unavailable, using seeded fallback: {e}")
+        _emit("ANALYZING", "contract_analysis", "Database unavailable — using seeded fallback data.")
+        contracts = _seeded_contracts()
+
     owned = [c for c in contracts if c["source"] == "OWNED"]
     market = [c for c in contracts if c["source"] == "MARKET"]
+
+    _emit("ANALYZING", "contract_analysis", f"Loaded {len(owned)} owned contracts and {len(market)} market offers.")
 
     product_focus = plan.get("context", {}).get("product_focus")
 
     corrections = detect_corrections(owned, market, market_data)
+    _emit("CORRECTING", "contract_analysis", f"Found {len(corrections)} pricing discrepancies exceeding 5% threshold.")
+
     flavours = _build_flavours(owned, market, product_focus)
+    _emit("ANALYZING", "contract_analysis", "Generated 3 optimization flavours: cheapest, lowest-risk, fastest.")
 
     logger.info(f"Contract analysis: {len(corrections)} corrections, 3 flavours built")
 

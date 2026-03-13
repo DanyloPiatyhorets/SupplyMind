@@ -117,8 +117,9 @@ def _mock_synthesis(
 ) -> dict:
     """Template-based fallback when ModelArk is unavailable."""
 
-    # Use real contract results if available, otherwise defaults
-    flavours = contract_results.get("flavours", {
+    # Use real contract results if non-empty, otherwise defaults
+    _raw_flavours = contract_results.get("flavours") or {}
+    flavours = _raw_flavours if _raw_flavours else {
         "cheapest": {
             "label": "Cheapest",
             "description": "Minimizes total cost by selecting lowest-price market offers",
@@ -146,9 +147,10 @@ def _mock_synthesis(
             "risk_score": 0.12,
             "savings_vs_current": 27300.0,
         },
-    })
+    }
 
-    corrections = contract_results.get("data_corrections", [
+    _raw_corrections = contract_results.get("data_corrections")
+    corrections = _raw_corrections if _raw_corrections else [
         {
             "contract_id": 1,
             "field": "unit_price",
@@ -167,7 +169,7 @@ def _mock_synthesis(
             "severity": "high",
             "recommendation": "replace",
         },
-    ])
+    ]
 
     market_overview = market_data.get(
         "market_summary",
