@@ -12,7 +12,6 @@ export default function HITLPage() {
   const [report, setReport] = useState<Record<string, unknown> | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
   const [approving, setApproving] = useState(false);
-
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -36,9 +35,9 @@ export default function HITLPage() {
 
   if (error) {
     return (
-      <div className="text-center py-20">
-        <p className="text-red-400 mb-4">Failed to load report: {error}</p>
-        <button onClick={() => navigate("/")} className="text-purple-400 hover:text-purple-300">
+      <div className="py-20 text-center">
+        <p className="mb-4 text-red-400">Failed to load report: {error}</p>
+        <button onClick={() => navigate("/optimize")} className="text-fuchsia-300 hover:text-fuchsia-200">
           Start new analysis
         </button>
       </div>
@@ -47,9 +46,9 @@ export default function HITLPage() {
 
   if (!report) {
     return (
-      <div className="text-center py-20">
-        <div className="w-6 h-6 border-2 border-purple-400 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-        <p className="text-gray-400">Loading report...</p>
+      <div className="py-20 text-center">
+        <div className="mx-auto mb-3 h-6 w-6 animate-spin rounded-full border-2 border-fuchsia-300 border-t-transparent" />
+        <p className="text-slate-400">Loading report...</p>
       </div>
     );
   }
@@ -58,45 +57,33 @@ export default function HITLPage() {
   const corrections = report.data_corrections as Correction[];
 
   return (
-    <div className="max-w-5xl mx-auto">
-      <div className="mb-8">
-        <h2 className="text-2xl font-bold text-white">
-          Human-in-the-Loop Review
-        </h2>
-        <p className="text-gray-400 mt-1">
-          Select a procurement strategy and approve to proceed.
+    <div className="mx-auto max-w-6xl space-y-6">
+      <section className="hero-gradient glass-strong rounded-[32px] px-6 py-8 sm:px-8">
+        <p className="section-label">Human Review</p>
+        <h1 className="mt-4 text-3xl font-semibold text-white">Choose the strategy, keep the control</h1>
+        <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-300 sm:text-base">
+          SupplyMind proposes options across cost, risk, and delivery speed. The recommendation is visible, but this step makes the governance model explicit: a person reviews evidence before anything is approved.
         </p>
+      </section>
+
+      <div>
+        <h3 className="mb-4 text-lg font-semibold text-white">Optimization Variants</h3>
+        <FlavourCards flavours={flavours} selected={selected} onSelect={setSelected} />
       </div>
 
-      <div className="mb-8">
-        <h3 className="text-lg font-semibold text-white mb-4">
-          Optimization Variants
-        </h3>
-        <FlavourCards
-          flavours={flavours}
-          selected={selected}
-          onSelect={setSelected}
-        />
-      </div>
+      <DataCorrections corrections={corrections} />
 
-      <div className="mb-8">
-        <DataCorrections corrections={corrections} />
-      </div>
-
-      <div className="bg-gray-800 border border-gray-700 rounded-xl p-5 mb-8">
-        <h3 className="text-lg font-semibold text-white mb-2">
-          Executive Summary
-        </h3>
-        <p className="text-gray-300 text-sm leading-relaxed">
-          {report.executive_summary as string}
-        </p>
+      <div className="glass-panel rounded-[28px] p-5">
+        <p className="section-label">Executive Framing</p>
+        <h3 className="mb-2 mt-3 text-lg font-semibold text-white">Executive Summary</h3>
+        <p className="text-sm leading-relaxed text-slate-300">{report.executive_summary as string}</p>
       </div>
 
       <div className="text-center">
         <button
           onClick={handleApprove}
           disabled={!selected || approving}
-          className="px-8 py-3 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-colors cursor-pointer"
+          className="cta-button cursor-pointer px-8 py-3 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {approving
             ? "Approving..."

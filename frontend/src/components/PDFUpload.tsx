@@ -38,20 +38,21 @@ export default function PDFUpload({ onUploaded }: Props) {
       <button
         onClick={() => fileRef.current?.click()}
         disabled={uploading}
-        className="flex items-center gap-2 px-4 py-2 bg-gray-700 hover:bg-gray-600 text-gray-200 rounded-lg text-sm transition-colors disabled:opacity-50 cursor-pointer"
+        className="ghost-button cursor-pointer px-4 py-3 text-sm font-medium disabled:opacity-50"
       >
         {uploading ? (
           "Uploading..."
         ) : (
           <>
-            <span>📎</span> Upload PDF
+            <span className="rounded-full bg-fuchsia-300/15 px-2 py-1 text-xs text-fuchsia-100">PDF</span>
+            Upload briefing document
           </>
         )}
       </button>
       {uploaded && (
-        <p className="text-xs text-gray-400 mt-2">
-          {uploaded.name} — {uploaded.chunks} chunks indexed
-        </p>
+        <div className="mt-3 rounded-2xl border border-emerald-300/12 bg-emerald-300/6 px-3 py-2 text-xs text-emerald-100">
+          {uploaded.name} indexed into {uploaded.chunks} retrievable chunks
+        </div>
       )}
     </div>
   );

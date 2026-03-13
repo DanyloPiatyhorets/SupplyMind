@@ -29,9 +29,9 @@ export default function ReportPage() {
 
   if (error) {
     return (
-      <div className="text-center py-20">
-        <p className="text-red-400 mb-4">Failed to load report: {error}</p>
-        <button onClick={() => navigate("/")} className="text-purple-400 hover:text-purple-300">
+      <div className="py-20 text-center">
+        <p className="mb-4 text-red-400">Failed to load report: {error}</p>
+        <button onClick={() => navigate("/optimize")} className="text-fuchsia-300 hover:text-fuchsia-200">
           Start new analysis
         </button>
       </div>
@@ -40,9 +40,9 @@ export default function ReportPage() {
 
   if (!report) {
     return (
-      <div className="text-center py-20">
-        <div className="w-6 h-6 border-2 border-purple-400 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-        <p className="text-gray-400">Loading report...</p>
+      <div className="py-20 text-center">
+        <div className="mx-auto mb-3 h-6 w-6 animate-spin rounded-full border-2 border-fuchsia-300 border-t-transparent" />
+        <p className="text-slate-400">Loading report...</p>
       </div>
     );
   }
@@ -68,88 +68,77 @@ export default function ReportPage() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto">
-      <div className="flex items-center justify-between mb-8">
+    <div className="mx-auto max-w-5xl space-y-6">
+      <section className="hero-gradient glass-strong rounded-[32px] px-6 py-8 sm:px-8">
         <div>
-          <h2 className="text-2xl font-bold text-white">Analysis Report</h2>
-          <p className="text-sm text-gray-400 mt-1">
+          <p className="section-label">Outcome</p>
+          <h1 className="mt-4 text-3xl font-semibold text-white">Executive analysis report</h1>
+          <p className="mt-2 text-sm text-slate-400">
             Generated: {new Date(metadata.generated_at).toLocaleString()} | Model: {metadata.model}
           </p>
         </div>
-        <button
-          onClick={exportMarkdown}
-          className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-gray-200 rounded-lg text-sm transition-colors cursor-pointer"
-        >
+        <div className="mt-5 grid gap-3 sm:grid-cols-3">
+          <StatCard label="Recommended" value={(report.recommended_variant as string).replace("_", " ")} />
+          <StatCard label="Risk items" value={String(risks.length)} />
+          <StatCard label="Next steps" value={String(nextSteps.length)} />
+        </div>
+      </section>
+
+      <div className="flex justify-end">
+        <button onClick={exportMarkdown} className="ghost-button cursor-pointer px-4 py-2 text-sm">
           Export Markdown
         </button>
       </div>
 
-      {/* Executive Summary */}
-      <section className="bg-gray-800 border border-gray-700 rounded-xl p-5 mb-6">
-        <h3 className="text-lg font-semibold text-white mb-2">
-          Executive Summary
-        </h3>
-        <p className="text-gray-300 text-sm leading-relaxed">
-          {report.executive_summary as string}
-        </p>
+      <section className="glass-panel rounded-[28px] p-5">
+        <h3 className="mb-2 text-lg font-semibold text-white">Executive Summary</h3>
+        <p className="text-sm leading-relaxed text-slate-300">{report.executive_summary as string}</p>
       </section>
 
-      {/* Market Intelligence */}
-      <section className="bg-gray-800 border border-gray-700 rounded-xl p-5 mb-6">
-        <h3 className="text-lg font-semibold text-white mb-2">
-          Market Intelligence
-        </h3>
-        <p className="text-gray-300 text-sm mb-3">{market.overview}</p>
+      <section className="glass-panel rounded-[28px] p-5">
+        <h3 className="mb-2 text-lg font-semibold text-white">Market Intelligence</h3>
+        <p className="mb-3 text-sm text-slate-300">{market.overview}</p>
         <ul className="space-y-1">
           {market.key_findings.map((f, i) => (
-            <li key={i} className="text-sm text-gray-400 flex items-start gap-2">
-              <span className="text-gray-500 mt-0.5">•</span>
+            <li key={i} className="flex items-start gap-2 text-sm text-slate-400">
+              <span className="mt-0.5 text-fuchsia-200">•</span>
               {f}
             </li>
           ))}
         </ul>
       </section>
 
-      {/* Document Insights */}
-      <section className="bg-gray-800 border border-gray-700 rounded-xl p-5 mb-6">
-        <h3 className="text-lg font-semibold text-white mb-2">
-          Document Insights
-        </h3>
-        <p className="text-gray-300 text-sm mb-3">{docInsights?.overview || "No documents uploaded for this analysis."}</p>
+      <section className="glass-panel rounded-[28px] p-5">
+        <h3 className="mb-2 text-lg font-semibold text-white">Document Insights</h3>
+        <p className="mb-3 text-sm text-slate-300">{docInsights?.overview || "No documents uploaded for this analysis."}</p>
         {(docInsights?.key_quotes || []).map((q, i) => (
           <blockquote
             key={i}
-            className="border-l-2 border-purple-500 pl-3 text-sm text-gray-400 italic mb-2"
+            className="mb-2 rounded-r-2xl border-l-2 border-fuchsia-300 bg-white/[0.03] py-2 pl-3 text-sm italic text-slate-400"
           >
             "{q.excerpt || q.text}"
-            <span className="text-gray-500 text-xs ml-2">— {q.doc_id}</span>
+            <span className="ml-2 text-xs text-slate-500">— {q.doc_id}</span>
           </blockquote>
         ))}
       </section>
 
-      {/* Recommendation */}
-      <section className="bg-gray-800 border border-gray-700 rounded-xl p-5 mb-6">
-        <h3 className="text-lg font-semibold text-white mb-2">
-          Recommendation
-        </h3>
-        <p className="text-gray-300 text-sm">
-          <span className="font-medium text-purple-400">
+      <section className="glass-panel rounded-[28px] p-5">
+        <h3 className="mb-2 text-lg font-semibold text-white">Recommendation</h3>
+        <p className="text-sm text-slate-300">
+          <span className="font-medium text-fuchsia-300">
             {(report.recommended_variant as string).replace("_", " ")}
           </span>{" "}
           — {report.recommendation_rationale as string}
         </p>
       </section>
 
-      {/* Risks */}
-      <section className="bg-gray-800 border border-gray-700 rounded-xl p-5 mb-6">
-        <h3 className="text-lg font-semibold text-white mb-3">
-          Risks & Mitigations
-        </h3>
+      <section className="glass-panel rounded-[28px] p-5">
+        <h3 className="mb-3 text-lg font-semibold text-white">Risks & Mitigations</h3>
         <div className="space-y-3">
           {risks.map((r, i) => (
             <div key={i} className="flex items-start gap-3 text-sm">
               <span
-                className={`px-2 py-0.5 rounded text-xs font-medium ${
+                className={`rounded px-2 py-0.5 text-xs font-medium ${
                   r.likelihood === "high"
                     ? "bg-red-900/30 text-red-400"
                     : r.likelihood === "medium"
@@ -160,21 +149,20 @@ export default function ReportPage() {
                 {r.likelihood}
               </span>
               <div>
-                <span className="text-gray-200">{r.risk}</span>
-                <span className="text-gray-500"> — {r.mitigation}</span>
+                <span className="text-slate-200">{r.risk}</span>
+                <span className="text-slate-500"> — {r.mitigation}</span>
               </div>
             </div>
           ))}
         </div>
       </section>
 
-      {/* Next Steps */}
-      <section className="bg-gray-800 border border-gray-700 rounded-xl p-5 mb-8">
-        <h3 className="text-lg font-semibold text-white mb-3">Next Steps</h3>
+      <section className="glass-panel rounded-[28px] p-5">
+        <h3 className="mb-3 text-lg font-semibold text-white">Next Steps</h3>
         <ol className="space-y-2">
           {nextSteps.map((step, i) => (
-            <li key={i} className="text-sm text-gray-300 flex items-start gap-3">
-              <span className="bg-purple-600 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+            <li key={i} className="flex items-start gap-3 text-sm text-slate-300">
+              <span className="mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-fuchsia-300 text-xs text-slate-950">
                 {i + 1}
               </span>
               {step}
@@ -183,14 +171,20 @@ export default function ReportPage() {
         </ol>
       </section>
 
-      <div className="text-center mb-8">
-        <button
-          onClick={() => navigate("/")}
-          className="px-6 py-2 bg-gray-700 hover:bg-gray-600 text-gray-200 rounded-lg text-sm transition-colors cursor-pointer"
-        >
+      <div className="mb-8 text-center">
+        <button onClick={() => navigate("/optimize")} className="ghost-button cursor-pointer px-6 py-2 text-sm">
           Start New Analysis
         </button>
       </div>
+    </div>
+  );
+}
+
+function StatCard({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="metric-card px-4 py-4">
+      <p className="text-xs uppercase tracking-[0.18em] text-slate-500">{label}</p>
+      <p className="mt-2 text-lg font-semibold text-white">{value}</p>
     </div>
   );
 }

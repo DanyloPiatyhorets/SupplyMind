@@ -22,47 +22,51 @@ export default function DataCorrections({
   if (corrections.length === 0) return null;
 
   return (
-    <div className="bg-gray-800 border border-gray-700 rounded-xl p-5">
-      <h3 className="text-lg font-semibold text-white mb-4">
-        🔧 Data Corrections
-      </h3>
+    <div className="glass-panel rounded-[28px] p-5 sm:p-6">
+      <div className="mb-4 flex items-start justify-between gap-4">
+        <div>
+          <p className="section-label">Data Integrity Layer</p>
+          <h3 className="mt-3 text-xl font-semibold text-white">Pricing Corrections</h3>
+          <p className="mt-1 text-sm text-slate-400">
+            Owned contracts are benchmarked against tracked market offers to expose stale pricing and renegotiation opportunities.
+          </p>
+        </div>
+        <div className="hidden rounded-2xl border border-white/8 bg-slate-950/35 px-4 py-3 text-right sm:block">
+          <p className="text-xs uppercase tracking-[0.18em] text-slate-500">Flags Raised</p>
+          <p className="mt-1 text-2xl font-semibold text-white">{corrections.length}</p>
+        </div>
+      </div>
+
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
-            <tr className="text-gray-400 border-b border-gray-700">
-              <th className="text-left py-2 pr-4">Contract</th>
-              <th className="text-left py-2 pr-4">Field</th>
-              <th className="text-right py-2 pr-4">Current</th>
-              <th className="text-right py-2 pr-4">Market</th>
-              <th className="text-right py-2 pr-4">Delta</th>
-              <th className="text-left py-2 pr-4">Severity</th>
-              <th className="text-left py-2">Action</th>
+            <tr className="border-b border-white/8 text-slate-500">
+              <th className="py-3 pr-4 text-left text-xs font-medium uppercase tracking-[0.18em]">Contract</th>
+              <th className="py-3 pr-4 text-left text-xs font-medium uppercase tracking-[0.18em]">Field</th>
+              <th className="py-3 pr-4 text-right text-xs font-medium uppercase tracking-[0.18em]">Current</th>
+              <th className="py-3 pr-4 text-right text-xs font-medium uppercase tracking-[0.18em]">Market</th>
+              <th className="py-3 pr-4 text-right text-xs font-medium uppercase tracking-[0.18em]">Delta</th>
+              <th className="py-3 pr-4 text-left text-xs font-medium uppercase tracking-[0.18em]">Severity</th>
+              <th className="py-3 text-left text-xs font-medium uppercase tracking-[0.18em]">Action</th>
             </tr>
           </thead>
           <tbody>
             {corrections.map((c, i) => (
-              <tr key={i} className="border-b border-gray-700/50">
-                <td className="py-2 pr-4 text-gray-200">#{c.contract_id}</td>
-                <td className="py-2 pr-4 text-gray-300">{c.field}</td>
-                <td className="py-2 pr-4 text-right text-gray-200">
-                  €{c.current_value.toLocaleString()}
+              <tr key={i} className="border-b border-white/6">
+                <td className="py-3 pr-4 text-slate-100">#{c.contract_id}</td>
+                <td className="py-3 pr-4 text-slate-300">{c.field}</td>
+                <td className="py-3 pr-4 text-right text-slate-200">€{c.current_value.toLocaleString()}</td>
+                <td className="py-3 pr-4 text-right text-slate-200">€{c.market_value.toLocaleString()}</td>
+                <td className="py-3 pr-4 text-right font-medium text-rose-300">
+                  {c.delta_pct > 0 ? "+" : ""}
+                  {c.delta_pct}%
                 </td>
-                <td className="py-2 pr-4 text-right text-gray-200">
-                  €{c.market_value.toLocaleString()}
-                </td>
-                <td className="py-2 pr-4 text-right text-red-400 font-medium">
-                  +{c.delta_pct}%
-                </td>
-                <td className="py-2 pr-4">
-                  <span
-                    className={`text-xs px-2 py-0.5 rounded-full ${SEVERITY_COLORS[c.severity] || ""}`}
-                  >
+                <td className="py-3 pr-4">
+                  <span className={`rounded-full px-2 py-1 text-xs ${SEVERITY_COLORS[c.severity] || ""}`}>
                     {c.severity}
                   </span>
                 </td>
-                <td className="py-2 text-gray-300 capitalize">
-                  {c.recommendation}
-                </td>
+                <td className="py-3 capitalize text-slate-300">{c.recommendation}</td>
               </tr>
             ))}
           </tbody>
