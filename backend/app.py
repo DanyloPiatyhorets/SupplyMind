@@ -23,7 +23,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
-CORS(app, origins=[config.FRONTEND_URL, "http://localhost:5173", "http://localhost:5174"])
+CORS(app, resources={r"/api/*": {"origins": "*"}})
 
 
 # ---------------------------------------------------------------------------
@@ -364,4 +364,6 @@ def approve():
 # ---------------------------------------------------------------------------
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=config.FLASK_PORT, debug=True, use_reloader=False)
+    import os
+    port = int(os.environ.get("PORT", config.FLASK_PORT))
+    app.run(host="0.0.0.0", port=port, debug=True, use_reloader=False)

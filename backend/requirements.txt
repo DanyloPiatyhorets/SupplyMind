@@ -1,10 +1,12 @@
 flask[async]
 flask-cors
+gunicorn
 openai
 python-dotenv
 psycopg2-binary
 pypdf
 pydantic
+requests
 duckduckgo-search
 chromadb
 volcengine
